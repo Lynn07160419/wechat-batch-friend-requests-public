@@ -1,0 +1,6 @@
+.DS_Store
+*.dSYM/
+wechat_ax_action
+batch.json
+*state.json
+.codex-tmp/

@@ -1,0 +1,4 @@
+interface:
+  display_name: "微信批量加好友"
+  short_description: "从电子表格安全核对并批量发送微信好友申请以及通过后问候"
+  default_prompt: "使用 $wechat-batch-friend-requests 按报名表安全处理一批微信好友申请。"
