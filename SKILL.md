@@ -57,6 +57,10 @@ description: 在 macOS 上从 XLSX、CSV 等名单安全核对并批量处理微
 
 ## 工具
 
-- `scripts/wechat_ax_action.swift` 是 macOS 微信 Accessibility 辅助程序。先编译到本次任务的临时目录，再运行；不要把二进制写进技能目录。
+- `scripts/wechat_ax_action.swift` 是 macOS 微信 Accessibility 辅助程序。先编译到本次任务的临时目录，再运行；不要把二进制写进技能目录。不带参数运行会打印全部命令用法。
+- 命令集合（生产用）：`check-friend` 只读审计、`search` 只读检索、`process-one` 提交好友申请、`process-existing-friend` 已有好友改备注并问候、`main-search-and-greet` 精确定位会话后问候、`greet-current-chat` 在当前会话问候、`save-open-profile-remark` 在已打开资料页改备注、`click-title` 点击界面元素、`remove-chat-draft-prefix` 只移除本次注入的草稿前缀。
+- 所有发消息入口共用同一段实现：收件人必须完全匹配 → 同文问候去重 → 草稿非空即停 → 聚焦回读 → 限频检查 → 发送 → 发送后复核。不要在调用方重复实现发送逻辑。
+- 辅助程序只读界面树、按元素相对位置点击，**不使用截图**：窗口移动、缩放、无法截屏都不影响；窗口被最小化或全部关闭时会自动还原或重新打开。
+- 首次验证或改动辅助程序后，用 `WECHAT_AX_DRY_RUN=1` 演练：只输入并回读，随后撤掉草稿，不点发送。
 - `scripts/validate_batch.mjs` 检查标准化名单的必填字段、重复行、重复标识和备注模板一致性。
-- 辅助程序依赖当前微信版本的 Accessibility 标签。若标签失效，先只读检查界面树并最小修补；不得用猜测坐标继续执行外部操作。
+- 辅助程序依赖当前微信版本的 Accessibility 标签。若标签失效，先用只读命令检查界面树并最小修补；不得用猜测坐标继续执行外部操作。
