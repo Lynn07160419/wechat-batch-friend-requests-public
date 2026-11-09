@@ -1,0 +1,39 @@
+{
+  "config": {
+    "remarkTemplate": "面试{grade}{department}{name}",
+    "requestText": "你好，我是负责面试安排的助教，想和你确认一下面试时间。",
+    "greetingText": "已经通过啦，面试安排稍后单独发你，注意查收。"
+  },
+  "records": [
+    {
+      "sheet": "示例名单",
+      "row": 2,
+      "name": "张示例",
+      "department": "信息管理系",
+      "grade": "25本",
+      "wechat": "example_zhang",
+      "phone": "13800000001",
+      "remark": "面试25本信息管理系张示例"
+    },
+    {
+      "sheet": "示例名单",
+      "row": 3,
+      "name": "李示例",
+      "department": "社会学系",
+      "grade": "24硕",
+      "wechat": "example_li",
+      "phone": "13800000002",
+      "remark": "面试24硕社会学系李示例"
+    },
+    {
+      "sheet": "示例名单",
+      "row": 4,
+      "name": "王示例",
+      "department": "新闻与传播学院",
+      "grade": "23博",
+      "wechat": "",
+      "phone": "13800000003",
+      "remark": "面试23博新闻与传播学院王示例"
+    }
+  ]
+}
