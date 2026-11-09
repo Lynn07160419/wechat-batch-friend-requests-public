@@ -1,0 +1,32 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-example:
+    name: 名单预检器（Node）
+    if: github.event.repository.private == false
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: 校验示例名单
+        run: node scripts/validate_batch.mjs examples/batch.sample.json
+
+  typecheck-helper:
+    name: 辅助程序类型检查（Swift）
+    if: github.event.repository.private == false
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: swiftc -typecheck
+        run: swiftc -typecheck scripts/wechat_ax_action.swift
