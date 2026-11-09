@@ -1,5 +1,7 @@
 # wechat-batch-friend-requests
 
+[![ci](https://github.com/Lynn07160419/wechat-batch-friend-requests-public/actions/workflows/ci.yml/badge.svg)](https://github.com/Lynn07160419/wechat-batch-friend-requests-public/actions/workflows/ci.yml)
+
 面向 macOS 微信桌面版的好友与消息自动化技能：把一份名单（XLSX / CSV / JSON）变成**可核验、可中止、可恢复**的微信操作。
 
 它优先保证「不误发」，而不是「发得快」。所有动作都走同一套校验闸门：**收件人必须完全匹配 → 同文去重 → 草稿非空即停 → 聚焦回读 → 限频检查 → 发送 → 发送后复核**。
@@ -150,6 +152,7 @@ node scripts/validate_batch.mjs examples/batch.sample.json
 
 ```
 .
+├── .github/workflows/ci.yml     # 示例名单预检 + Swift 类型检查（私有仓库自动跳过）
 ├── SKILL.md                     # 技能入口与核心不变量
 ├── references/runbook.md        # 完整运行手册、状态模型与故障分支
 ├── examples/batch.sample.json   # 占位样例，可直接跑通预检
