@@ -86,12 +86,6 @@ func focusedElement() -> AXUIElement? {
     return unsafeBitCast(raw, to: AXUIElement.self)
 }
 
-func parentElement(_ element: AXUIElement) -> AXUIElement? {
-    guard let raw = copyAttr(element, kAXParentAttribute as String),
-          CFGetTypeID(raw) == AXUIElementGetTypeID() else { return nil }
-    return unsafeBitCast(raw, to: AXUIElement.self)
-}
-
 func elementSummary(_ element: AXUIElement) -> String {
     let p = pointAttr(element, kAXPositionAttribute as String) ?? .zero
     let s = sizeAttr(element, kAXSizeAttribute as String) ?? .zero
