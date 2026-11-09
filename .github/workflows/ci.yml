@@ -15,10 +15,10 @@ jobs:
     if: github.event.repository.private == false
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
-          node-version: "20"
+          node-version: "22"
       - name: 校验示例名单
         run: node scripts/validate_batch.mjs examples/batch.sample.json
 
@@ -27,6 +27,6 @@ jobs:
     if: github.event.repository.private == false
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: swiftc -typecheck
         run: swiftc -typecheck scripts/wechat_ax_action.swift
