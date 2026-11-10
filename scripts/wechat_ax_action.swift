@@ -272,15 +272,24 @@ func enterSearch(_ text: String) -> AXUIElement? {
 
 // MARK: - 判定
 
-func localContactSearchResults() -> [AXUIElement] {
-    guard let list = find(identifier: "search_list") else { return [] }
+func localContactSearchResults() -> [AXUIElement]? {
+    guard let list = find(identifier: "search_list") else { return nil }
     let elements = allDescendants(list)
     let contactHeaderTitles: Set<String> = ["联系人", "最常使用"]
-    guard let header = elements.first(where: {
-        stringAttr($0, kAXRoleAttribute as String) == (kAXStaticTextRole as String) &&
-        contactHeaderTitles.contains(stringAttr($0, kAXTitleAttribute as String))
-    }), let headerPosition = pointAttr(header, kAXPositionAttribute as String) else { return [] }
     let sectionTitles: Set<String> = ["群聊", "聊天记录", "公众号", "小程序", "搜索网络结果"]
+    let headers = elements.filter {
+        stringAttr($0, kAXRoleAttribute as String) == (kAXStaticTextRole as String) &&
+            stringAttr($0, kAXIdentifierAttribute as String).isEmpty
+    }
+    guard let header = headers.first(where: {
+        contactHeaderTitles.contains(stringAttr($0, kAXTitleAttribute as String))
+    }) else {
+        // 没有本地联系人时，微信仍会显示可识别的结果分区。
+        return headers.contains {
+            sectionTitles.contains(stringAttr($0, kAXTitleAttribute as String))
+        } ? [] : nil
+    }
+    guard let headerPosition = pointAttr(header, kAXPositionAttribute as String) else { return nil }
     let nextSectionY = elements.compactMap { element -> CGFloat? in
         let title = stringAttr(element, kAXTitleAttribute as String)
         guard sectionTitles.contains(title),
@@ -520,7 +529,11 @@ case "check-friend":
         print("{\"result\":\"rate_limit\",\"warning\":\"\(warning)\"}")
         exit(70)
     }
-    let titles = localContactSearchResults().map { stringAttr($0, kAXTitleAttribute as String) }
+    guard let contacts = localContactSearchResults() else {
+        print("{\"result\":\"search_error\",\"reason\":\"results_unavailable\"}")
+        exit(123)
+    }
+    let titles = contacts.map { stringAttr($0, kAXTitleAttribute as String) }
     let payload: [String: Any] = ["result": "friend_check", "localCount": titles.count, "titles": titles]
     let data = try JSONSerialization.data(withJSONObject: payload, options: [])
     print(String(data: data, encoding: .utf8)!)
@@ -651,7 +664,10 @@ case "process-existing-friend":
         fputs("Verified main search failed\n", stderr)
         exit(100)
     }
-    let contacts = localContactSearchResults()
+    guard let contacts = localContactSearchResults() else {
+        fputs("Main search results unavailable\n", stderr)
+        exit(123)
+    }
     guard contacts.count == 1 else {
         print("RESULT=NOT_EXISTING_FRIEND LOCAL_MATCHES=\(contacts.count)")
         exit(0)

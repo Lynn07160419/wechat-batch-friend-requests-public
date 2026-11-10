@@ -70,7 +70,7 @@ swiftc /path/to/skill/scripts/wechat_ax_action.swift -o /task/tmp/wechat_ax_acti
 /task/tmp/wechat_ax_action check-friend '预期备注'
 ```
 
-返回 `{"result":"friend_check","localCount":N,"titles":[...]}` 即说明界面可读；返回 `search_error` 表示搜索框聚焦或回读失败，按 §5 处理。
+返回 `{"result":"friend_check","localCount":N,"titles":[...]}` 即说明结果可读。返回 `search_error` 时按 §5 处理。
 
 ## 4. 创建断点状态
 
@@ -126,7 +126,7 @@ swiftc /path/to/skill/scripts/wechat_ax_action.swift -o /task/tmp/wechat_ax_acti
 - `localCount > 1`：`ambiguous`，不得自动点击。
 - 只有“联系人”或“最常使用”分区算本地好友；“搜索网络结果”不算。
 - 三个查询都未命中才记为 `not_friend`。
-- 聚焦/回读失败是 `search_error`，不是“非好友”。最多做一次无输入副作用的界面恢复；仍失败则停当前行。
+- 聚焦或回读失败，以及搜索结果列表缺失或无法识别，都返回 `search_error`。将该行保留为待核验。最多做一次无输入副作用的界面恢复，仍失败则停当前行。
 
 完成后核对：结果条数等于源记录条数、行号唯一、首末行正确、没有未分类项。
 
