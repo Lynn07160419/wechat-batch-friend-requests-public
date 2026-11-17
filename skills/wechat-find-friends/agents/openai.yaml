@@ -1,0 +1,4 @@
+interface:
+  display_name: "按条件检索微信好友"
+  short_description: "按备注、消息、时间及图片线索交叉检索微信好友，保留证据与未确认项"
+  default_prompt: "使用 $wechat-find-friends 按一个或多个条件检索我的微信好友，并给出可核验的匹配结果。"

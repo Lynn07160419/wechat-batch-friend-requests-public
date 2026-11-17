@@ -6,3 +6,11 @@ wechat_ax_action
 batch.json
 *state.json
 .codex-tmp/
+__pycache__/
+*.pyc
+.venv/
+.local/
+image-index/
+key-info.json
+wechat-query
+ocr-images

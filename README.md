@@ -2,7 +2,14 @@
 
 [![ci](https://github.com/Lynn07160419/wechat-batch-friend-requests-public/actions/workflows/ci.yml/badge.svg)](https://github.com/Lynn07160419/wechat-batch-friend-requests-public/actions/workflows/ci.yml)
 
-面向 macOS 微信桌面版的好友与消息自动化技能：把一份名单（XLSX / CSV / JSON）变成**可核验、可中止、可恢复**的微信操作。
+面向 macOS 微信桌面版的两个技能：按线索检索好友，以及把名单（XLSX / CSV / JSON）变成**可核验、可中止、可恢复**的微信操作。
+
+| 技能 | 适用任务 | 入口 |
+| --- | --- | --- |
+| `wechat-find-friends` | 按一个或多个条件交叉检索备注、收发消息、群昵称、图片文字及已有名单 | [检索好友](skills/wechat-find-friends/SKILL.md) |
+| `wechat-batch-friend-requests` | 名单好友审计，以及获授权后的申请、备注和定向问候 | [批量好友工作流](SKILL.md) |
+
+检索默认只读。找到人之后，仅执行用户在当前任务授权的动作；单独补备注使用备注专用入口。
 
 它优先保证「不误发」，而不是「发得快」。所有动作都走同一套校验闸门：**收件人必须完全匹配 → 同文去重 → 草稿非空即停 → 聚焦回读 → 限频检查 → 发送 → 发送后复核**。
 
@@ -12,6 +19,8 @@
 
 | 场景 | 行为 | 产出 |
 | --- | --- | --- |
+| 条件检索（只读） | 先用消息、备注等条件缩小候选，再核对账号、名单和图片；区分符合、不符与未知 | 候选与证据、覆盖范围、未确认项 |
+| 本地图片检索（只读） | 明确文件清单 → 解码可读素材 → 本地 OCR → 按新条件复用索引 | 来源摘要、文字命中、缺失或过期记录 |
 | 好友审计（只读） | 逐条搜备注、微信号、手机号，只认主搜索里的「联系人 / 最常使用」分区 | `friend` / `not_friend` / `ambiguous` |
 | 发送好友申请 | 微信号优先，失败才试同一行的手机号；提交前回读申请语与备注 | `request_sent` / `already_pending` / `unresolved` |
 | 已有好友 | 验身份 → 改备注 → 检查是否已问候 → 发一次问候 | `remark_updated` / `greeting_sent` |
@@ -45,7 +54,31 @@ git clone https://github.com/Lynn07160419/wechat-batch-friend-requests-public.gi
 
 WorkBuddy 用户把目标路径换成 `~/.workbuddy/skills/wechat-batch-friend-requests` 即可，两份目录内容一致。
 
-## 快速开始
+仓库根目录继续提供原技能。将新增检索技能安装为同级目录：
+
+```bash
+test ! -e ~/.codex/skills/wechat-find-friends && \
+  cp -R ~/.codex/skills/wechat-batch-friend-requests/skills/wechat-find-friends \
+    ~/.codex/skills/wechat-find-friends
+```
+
+目标已存在时先比较版本，不覆盖本地修改。WorkBuddy 同样复制到自己的 `skills` 目录。检索技能可独立安装；需要补备注时再复用已安装的批量技能。
+
+## 按条件检索好友
+
+示例请求：
+
+> 用 `$wechat-find-friends` 找出备注以 1 或 a 开头、我发过某条欢迎语，并且通过图片自报过姓名的好友。先给出可核验的匹配结果。
+
+流程把“必须满足”“排除”“仅用于优先排序”分开，保留条件的且／或关系。优先做成本低、选择性高的搜索；一次收集候选，后续复用。微信 UI 单路操作，独立的本地名单核对和图片 OCR 可以并行。用户补充院系、年级等线索后，优先重筛已有索引。
+
+检索辅助程序支持主搜索、聊天记录搜索、群成员搜索、完整界面树采集和本地联系人分区识别。主窗口按控件识别；缺失的结果区不会被当作零匹配，未知状态不会被当作不符合。原文件、聊天记录和缓存不会因检索而删除。
+
+图片索引使用 Python 3.9+、Pillow、PyCryptodome 和 macOS Vision；WXGF 首帧解码可选用本机已有 ffmpeg。只处理明确清单及已取得的图片密钥，不提取进程密钥。运行环境与具体命令见 [图片检索](skills/wechat-find-friends/references/cache-images.md)。索引包含私人文字，应放在仓库外的任务目录。
+
+OCR 命中必须回看图片，并核验所属账号与上下文。只有缩略图、图片过期、源文件变化或扫描中断时，结果保留为未确认；不会生成或猜测姓名。
+
+## 批量好友技能快速开始
 
 **1. 编译到临时目录**（不要把二进制写进技能目录）
 
@@ -152,15 +185,32 @@ node scripts/validate_batch.mjs examples/batch.sample.json
 
 ```
 .
-├── .github/workflows/ci.yml     # 示例名单预检 + Swift 类型检查（私有仓库自动跳过）
+├── .github/workflows/ci.yml     # 名单预检、Swift 编译、离线索引与合成界面测试
 ├── SKILL.md                     # 技能入口与核心不变量
 ├── references/runbook.md        # 完整运行手册、状态模型与故障分支
 ├── examples/batch.sample.json   # 占位样例，可直接跑通预检
 ├── scripts/
 │   ├── validate_batch.mjs       # 名单预检器
 │   └── wechat_ax_action.swift   # 微信 Accessibility 辅助程序
-└── agents/openai.yaml           # 技能界面元数据
+├── agents/openai.yaml           # 批量技能界面元数据
+├── skills/wechat-find-friends/
+│   ├── SKILL.md                 # 检索好友技能入口
+│   ├── agents/openai.yaml
+│   ├── references/              # 条件与证据、界面检索、缓存图片
+│   └── scripts/                 # 只读检索辅助、Vision OCR、可续作图片索引
+└── tests/test_friend_search.py   # 仅合成数据，无微信登录或真实联系人
 ```
+
+## 验证
+
+使用已具备 `skills/wechat-find-friends/scripts/requirements.txt` 依赖的 Python 环境：
+
+```bash
+node scripts/validate_batch.mjs examples/batch.sample.json
+python -m unittest discover -s tests -v
+```
+
+macOS 上可编译两个新辅助程序，把路径通过 `WECHAT_QUERY_BIN`、`WECHAT_OCR_BIN` 传给同一测试命令。测试会离线验证改名窗口、搜索结果不可用、网络结果排除、同名候选不误合并、索引中断恢复、源文件保护和中文 OCR；不会打开微信、改备注或发送消息。
 
 ## License
 
@@ -170,6 +220,6 @@ node scripts/validate_batch.mjs examples/batch.sample.json
 
 ### English summary
 
-A macOS-only automation skill for the WeChat desktop client. It turns a roster (XLSX / CSV / JSON) into verifiable, resumable WeChat operations: friend-status audit, templated friend requests, remark updates, and one-shot greetings.
+Two macOS skills for the WeChat desktop client: evidence-based friend search in `skills/wechat-find-friends`, and the existing roster workflow at the repository root. Friend search combines message, remark, group nickname, roster and local image evidence, preserving unknown results and resumable OCR indexes. The roster skill handles friend-status audit, templated friend requests, remark updates, and one-shot greetings.
 
 It drives WeChat through the macOS Accessibility tree instead of screenshots, so window movement, zooming, and missing screen-recording permission do not break it. Every send path shares one gate: exact recipient match, duplicate-text guard, non-empty draft stop, focused read-back, rate-limit check, then post-send verification. Any ambiguous outcome is marked `unconfirmed` and never auto-retried. Requires macOS, a logged-in WeChat, Xcode Command Line Tools, and Accessibility permission for the host process.

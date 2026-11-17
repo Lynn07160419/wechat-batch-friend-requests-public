@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   validate-example:
-    name: 名单预检器（Node）
+    name: 名单与离线索引（Node / Python）
     if: github.event.repository.private == false
     runs-on: ubuntu-latest
     steps:
@@ -21,12 +21,32 @@ jobs:
           node-version: "22"
       - name: 校验示例名单
         run: node scripts/validate_batch.mjs examples/batch.sample.json
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: 安装离线图片测试依赖
+        run: python -m pip install -r skills/wechat-find-friends/scripts/requirements.txt
+      - name: 离线索引回归测试
+        run: python -m unittest discover -s tests -v
 
   typecheck-helper:
-    name: 辅助程序类型检查（Swift）
+    name: Swift 与合成界面 / OCR 测试
     if: github.event.repository.private == false
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v5
       - name: swiftc -typecheck
         run: swiftc -typecheck scripts/wechat_ax_action.swift
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: 安装离线图片测试依赖
+        run: python -m pip install -r skills/wechat-find-friends/scripts/requirements.txt
+      - name: 编译检索与 OCR 工具并测试（不启动微信）
+        shell: bash
+        run: |
+          test_bin="$(mktemp -d)"
+          swiftc skills/wechat-find-friends/scripts/wechat_ax_query.swift -o "$test_bin/wechat-query"
+          swiftc skills/wechat-find-friends/scripts/ocr_images.swift -o "$test_bin/ocr-images"
+          WECHAT_QUERY_BIN="$test_bin/wechat-query" WECHAT_OCR_BIN="$test_bin/ocr-images" \
+            python -m unittest discover -s tests -v

@@ -168,6 +168,16 @@ swiftc /path/to/skill/scripts/wechat_ax_action.swift -o /task/tmp/wechat_ax_acti
 
 ## 7. 已有好友分支
 
+若只是按消息或图片线索查找联系人，先使用 [检索好友技能](../skills/wechat-find-friends/SKILL.md) 完成候选与证据核对。检索命中不是发送授权。
+
+若本轮只授权补备注，打开并核验当前联系人资料及备注编辑器后使用：
+
+```bash
+/task/tmp/wechat_ax_action save-open-profile-remark '预期账号' '预期备注'
+```
+
+先记录原备注和字段依据，保存后回读新备注及账号。未知字段留空；保存结果不明先核对现状，不重复提交。不要进入下述同时问候的分支。
+
 用户明确授权“改备注并问候”后，可使用：
 
 ```bash
