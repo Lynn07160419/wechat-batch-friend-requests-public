@@ -1,20 +1,18 @@
-# wechat-batch-friend-requests
+# WeChat Skills｜微信好友检索、分组与批量添加
 
-[![ci](https://github.com/Lynn07160419/wechat-batch-friend-requests-public/actions/workflows/ci.yml/badge.svg)](https://github.com/Lynn07160419/wechat-batch-friend-requests-public/actions/workflows/ci.yml)
+[![ci](https://github.com/Lynn07160419/wechat-skills/actions/workflows/ci.yml/badge.svg)](https://github.com/Lynn07160419/wechat-skills/actions/workflows/ci.yml)
 
-面向 macOS 微信桌面版的三个技能：按线索检索好友、管理朋友标签，以及按名单（XLSX / CSV / JSON）处理好友申请和问候。
+面向 **macOS 微信桌面版**的 Skill 合集：**按条件找好友、从截图或名单做标签分组、批量加好友及补备注/问候**。
 
-| 技能 | 适用任务 | 入口 |
+| 想做什么 | 使用的 Skill | 文档 |
 | --- | --- | --- |
-| `wechat-find-friends` | 按一个或多个条件交叉检索备注、收发消息、群昵称、图片文字及已有名单 | [检索好友](skills/wechat-find-friends/SKILL.md) |
-| `wechat-contact-labels` | 从截图或名单核对已有好友，新建朋友标签并批量添加成员 | [好友分组与标签](skills/wechat-contact-labels/SKILL.md) |
-| `wechat-batch-friend-requests` | 名单好友审计，以及获授权后的申请、备注和定向问候 | [批量好友工作流](SKILL.md) |
+| **找好友**：按备注、收发消息、日期、群昵称、图片文字等条件交叉检索 | `wechat-find-friends` | [检索好友](skills/wechat-find-friends/SKILL.md) |
+| **做分组**：从截图或名单核对已有好友，新建标签并批量加入成员 | `wechat-contact-labels` | [好友分组与标签](skills/wechat-contact-labels/SKILL.md) |
+| **加好友与补备注/问候**：按表格核对好友状态，批量申请、设置备注和定向问候 | `wechat-batch-friend-requests` | [批量好友工作流](SKILL.md) |
 
 检索默认只读。找到人之后，仅执行用户在当前任务授权的动作；单独补备注使用备注专用入口，加入朋友分组使用标签技能。
 
 申请和消息入口使用发送检查：**收件人完全匹配 → 同文去重 → 草稿非空即停 → 聚焦回读 → 限频检查 → 发送 → 发送后复核**。标签操作独立核对账号、已选人数和保存结果，不调用发送入口。
-
-> 这不是群发工具，也不是营销工具。它假设你已经认识名单里的人，只是需要把「核对好友、加好友、改备注、发一条消息」这些重复动作做准。
 
 ## 它能做什么
 
@@ -52,13 +50,13 @@
 ## 安装
 
 ```bash
-git clone https://github.com/Lynn07160419/wechat-batch-friend-requests-public.git \
+git clone https://github.com/Lynn07160419/wechat-skills.git \
   ~/.codex/skills/wechat-batch-friend-requests
 ```
 
 WorkBuddy 用户把目标路径换成 `~/.workbuddy/skills/wechat-batch-friend-requests` 即可，两份目录内容一致。
 
-仓库根目录继续提供原技能。将检索和标签技能安装为同级目录：
+仓库名为 `wechat-skills`；根目录提供 `wechat-batch-friend-requests`，因此上面的安装目录仍按技能名命名。将 `skills/` 下的检索和标签技能安装为同级目录：
 
 ```bash
 test ! -e ~/.codex/skills/wechat-find-friends && \
