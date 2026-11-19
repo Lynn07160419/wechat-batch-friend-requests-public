@@ -2,16 +2,17 @@
 
 [![ci](https://github.com/Lynn07160419/wechat-batch-friend-requests-public/actions/workflows/ci.yml/badge.svg)](https://github.com/Lynn07160419/wechat-batch-friend-requests-public/actions/workflows/ci.yml)
 
-面向 macOS 微信桌面版的两个技能：按线索检索好友，以及把名单（XLSX / CSV / JSON）变成**可核验、可中止、可恢复**的微信操作。
+面向 macOS 微信桌面版的三个技能：按线索检索好友、管理朋友标签，以及按名单（XLSX / CSV / JSON）处理好友申请和问候。
 
 | 技能 | 适用任务 | 入口 |
 | --- | --- | --- |
 | `wechat-find-friends` | 按一个或多个条件交叉检索备注、收发消息、群昵称、图片文字及已有名单 | [检索好友](skills/wechat-find-friends/SKILL.md) |
+| `wechat-contact-labels` | 从截图或名单核对已有好友，新建朋友标签并批量添加成员 | [好友分组与标签](skills/wechat-contact-labels/SKILL.md) |
 | `wechat-batch-friend-requests` | 名单好友审计，以及获授权后的申请、备注和定向问候 | [批量好友工作流](SKILL.md) |
 
-检索默认只读。找到人之后，仅执行用户在当前任务授权的动作；单独补备注使用备注专用入口。
+检索默认只读。找到人之后，仅执行用户在当前任务授权的动作；单独补备注使用备注专用入口，加入朋友分组使用标签技能。
 
-它优先保证「不误发」，而不是「发得快」。所有动作都走同一套校验闸门：**收件人必须完全匹配 → 同文去重 → 草稿非空即停 → 聚焦回读 → 限频检查 → 发送 → 发送后复核**。
+申请和消息入口使用发送检查：**收件人完全匹配 → 同文去重 → 草稿非空即停 → 聚焦回读 → 限频检查 → 发送 → 发送后复核**。标签操作独立核对账号、已选人数和保存结果，不调用发送入口。
 
 > 这不是群发工具，也不是营销工具。它假设你已经认识名单里的人，只是需要把「核对好友、加好友、改备注、发一条消息」这些重复动作做准。
 
@@ -21,21 +22,23 @@
 | --- | --- | --- |
 | 条件检索（只读） | 先用消息、备注等条件缩小候选，再核对账号、名单和图片；区分符合、不符与未知 | 候选与证据、覆盖范围、未确认项 |
 | 本地图片检索（只读） | 明确文件清单 → 解码可读素材 → 本地 OCR → 按新条件复用索引 | 来源摘要、文字命中、缺失或过期记录 |
+| 好友分组与标签 | 合并截图重叠 → 核对同名账号 → 在“添加成员”中累计多选 → 保存后核验 | 新增、原已存在、未解决及最终成员数 |
 | 好友审计（只读） | 逐条搜备注、微信号、手机号，只认主搜索里的「联系人 / 最常使用」分区 | `friend` / `not_friend` / `ambiguous` |
 | 发送好友申请 | 微信号优先，失败才试同一行的手机号；提交前回读申请语与备注 | `request_sent` / `already_pending` / `unresolved` |
 | 已有好友 | 验身份 → 改备注 → 检查是否已问候 → 发一次问候 | `remark_updated` / `greeting_sent` |
 | 定向发消息 | 按备注在主搜索里完全匹配，会话标题一致才允许输入 | `GREETING_SENT` / 已存在则跳过 |
 
-## 为什么它不用截图
+## 界面如何定位
 
-辅助程序只读 macOS Accessibility 界面树，按元素的相对位置点击，**全程不截屏**。因此：
+申请和问候辅助程序读取 macOS Accessibility 界面树，按元素的相对位置点击，无需截图。它们支持：
 
-- 微信窗口被移动、缩放、拉到副屏，不影响定位；
-- 系统没给「屏幕录制」权限也能用；
-- 窗口被最小化会自动还原，所有窗口都关掉会自动重开微信；
-- 窄窗口下搜索框折叠成入口、AX 树短暂读空，都能自愈重试。
+- 按当前元素边界定位，适应窗口移动与缩放；
+- 未授予屏幕录制权限时使用可读的界面树；
+- 按各入口的恢复规则处理窗口最小化、搜索框折叠与短暂空树。
 
-代价是它依赖当前微信版本的 Accessibility 标签（identifier 与 title）。微信大版本更新后标签可能变，需要先用只读命令 `search` 检查界面树再最小修补——**不要改成猜坐标**。
+截图名单及同名头像核对仍需要查看原图或当前截图。标签流程优先使用界面树；管理入口可能没有文字，右键菜单可能位于独立窗口，需补读当前结构，不能把遗漏当作不存在。
+
+这些流程依赖微信当前的 Accessibility 标签（identifier 与 title）。版本更新后先只读检查，再调整定位；不猜坐标，也不沿用旧控件索引。
 
 ## 环境要求
 
@@ -43,6 +46,7 @@
 - 已登录的微信桌面版
 - Xcode Command Line Tools（提供 `swiftc`）
 - Node.js 18+（仅名单预检器需要）
+- Python 3.9+（标签离线核对器仅用标准库；图片索引另有依赖）
 - 运行它的进程（Terminal / Codex / WorkBuddy）已在「系统设置 → 隐私与安全性 → 辅助功能」中被授权
 
 ## 安装
@@ -54,15 +58,19 @@ git clone https://github.com/Lynn07160419/wechat-batch-friend-requests-public.gi
 
 WorkBuddy 用户把目标路径换成 `~/.workbuddy/skills/wechat-batch-friend-requests` 即可，两份目录内容一致。
 
-仓库根目录继续提供原技能。将新增检索技能安装为同级目录：
+仓库根目录继续提供原技能。将检索和标签技能安装为同级目录：
 
 ```bash
 test ! -e ~/.codex/skills/wechat-find-friends && \
   cp -R ~/.codex/skills/wechat-batch-friend-requests/skills/wechat-find-friends \
     ~/.codex/skills/wechat-find-friends
+
+test ! -e ~/.codex/skills/wechat-contact-labels && \
+  cp -R ~/.codex/skills/wechat-batch-friend-requests/skills/wechat-contact-labels \
+    ~/.codex/skills/wechat-contact-labels
 ```
 
-目标已存在时先比较版本，不覆盖本地修改。WorkBuddy 同样复制到自己的 `skills` 目录。检索技能可独立安装；需要补备注时再复用已安装的批量技能。
+目标已存在时先比较版本，不覆盖本地修改。WorkBuddy 同样复制到自己的 `skills` 目录。检索和标签技能均可独立安装；需要补备注时再复用已安装的批量技能。
 
 ## 按条件检索好友
 
@@ -77,6 +85,18 @@ test ! -e ~/.codex/skills/wechat-find-friends && \
 图片索引使用 Python 3.9+、Pillow、PyCryptodome 和 macOS Vision；WXGF 首帧解码可选用本机已有 ffmpeg。只处理明确清单及已取得的图片密钥，不提取进程密钥。运行环境与具体命令见 [图片检索](skills/wechat-find-friends/references/cache-images.md)。索引包含私人文字，应放在仓库外的任务目录。
 
 OCR 命中必须回看图片，并核验所属账号与上下文。只有缩略图、图片过期、源文件变化或扫描中断时，结果保留为未确认；不会生成或猜测姓名。
+
+## 从截图批量加入朋友分组
+
+示例请求：
+
+> 用 `$wechat-contact-labels`，把这几张截图里的已有好友加入“示例小圈”，保留原有标签。同名账号先核实，其他人可以先处理。
+
+已在 Mac 微信 4.1.15 验证的路径：**通讯录 → 通讯录管理 → 创建或选中标签 → 右键 → 添加成员**。在该选择器里逐个搜索、勾选，选择会累计，最后统一保存。普通管理表格的搜索会清空勾选，不适合用同样方式连续选人。
+
+技能包含截图重叠合并、同名头像核对、无文字入口及漏报菜单定位、异步保存和断点恢复。保存后以成员身份和最终人数核验，原有标签继续保留。详细步骤见 [界面流程](skills/wechat-contact-labels/references/macos-ui.md)。
+
+附带的 `label_checks.py` 只核对本地 JSON：不完整结果保留未知、同名账号保留歧义、用账号集合检查实际成员，避免人数相同却加错人。数据格式和命令见 [匹配与验收](skills/wechat-contact-labels/references/verification.md)。
 
 ## 批量好友技能快速开始
 
@@ -170,8 +190,8 @@ node scripts/validate_batch.mjs examples/batch.sample.json
 - **授权按任务计**：只读核对不会被自动升级为发送。每次发申请、改备注、发消息都需要当次明确授权。
 - **失败不重试**：结果不明确一律记 `unconfirmed`，绝不自动重发；看到「等待验证」视为已有申请。
 - **限频硬停**：出现「操作太频繁」「请稍后再试」，立刻停止整批，不加速、不换号、不绕限制。
-- **单线程**：逐人处理，每人完成并原子写入状态后才进入下一条。
-- **本地运行**：不联网、不上传、不存任何凭据；仓库里没有真实名单、手机号、微信号或聊天内容。
+- **UI 单路操作**：记录每次可核验的选择和保存；独立的本地 OCR 与名单核对可以并行。
+- **本地证据**：核对器在本地运行，不上传名单或凭据；微信客户端仍正常同步授权的操作。真实名单、截图、账号和聊天内容放在仓库外。
 - **不猜身份**：多条本地结果、身份不匹配、聊天框已有草稿、界面结构变化，全部停止当前行交由人判断。
 
 ## 已知限制
@@ -185,7 +205,7 @@ node scripts/validate_batch.mjs examples/batch.sample.json
 
 ```
 .
-├── .github/workflows/ci.yml     # 名单预检、Swift 编译、离线索引与合成界面测试
+├── .github/workflows/ci.yml     # 名单预检、Swift 编译、离线索引与标签核对测试
 ├── SKILL.md                     # 技能入口与核心不变量
 ├── references/runbook.md        # 完整运行手册、状态模型与故障分支
 ├── examples/batch.sample.json   # 占位样例，可直接跑通预检
@@ -198,7 +218,12 @@ node scripts/validate_batch.mjs examples/batch.sample.json
 │   ├── agents/openai.yaml
 │   ├── references/              # 条件与证据、界面检索、缓存图片
 │   └── scripts/                 # 只读检索辅助、Vision OCR、可续作图片索引
-└── tests/test_friend_search.py   # 仅合成数据，无微信登录或真实联系人
+├── skills/wechat-contact-labels/
+│   ├── SKILL.md                 # 新建标签、批量添加已有好友
+│   ├── agents/openai.yaml
+│   ├── references/              # 界面流程、身份与成员集合验收
+│   └── scripts/label_checks.py  # 仅本地 JSON，不操作微信
+└── tests/                       # 仅合成数据，无微信登录或真实联系人
 ```
 
 ## 验证
@@ -210,7 +235,13 @@ node scripts/validate_batch.mjs examples/batch.sample.json
 python -m unittest discover -s tests -v
 ```
 
-macOS 上可编译两个新辅助程序，把路径通过 `WECHAT_QUERY_BIN`、`WECHAT_OCR_BIN` 传给同一测试命令。测试会离线验证改名窗口、搜索结果不可用、网络结果排除、同名候选不误合并、索引中断恢复、源文件保护和中文 OCR；不会打开微信、改备注或发送消息。
+标签核对器可单独测试，无需图片依赖：
+
+```bash
+python -m unittest discover -s tests -p test_contact_labels.py -v
+```
+
+macOS 上可编译检索和 OCR 辅助程序，把路径通过 `WECHAT_QUERY_BIN`、`WECHAT_OCR_BIN` 传给完整测试命令。测试覆盖窗口与结果识别、索引恢复、源文件保护、中文 OCR，以及标签重名、枚举不完整、异步保存和成员集合不符；不会打开微信或执行真实写操作。
 
 ## License
 
@@ -220,6 +251,6 @@ macOS 上可编译两个新辅助程序，把路径通过 `WECHAT_QUERY_BIN`、`
 
 ### English summary
 
-Two macOS skills for the WeChat desktop client: evidence-based friend search in `skills/wechat-find-friends`, and the existing roster workflow at the repository root. Friend search combines message, remark, group nickname, roster and local image evidence, preserving unknown results and resumable OCR indexes. The roster skill handles friend-status audit, templated friend requests, remark updates, and one-shot greetings.
+Three macOS skills for the WeChat desktop client: evidence-based friend search in `skills/wechat-find-friends`, existing-contact labels in `skills/wechat-contact-labels`, and the roster workflow at the repository root. The label skill resolves screenshot overlaps and same-name accounts, accumulates selections in the Add Members picker, preserves existing tags, and verifies asynchronous saves. It does not create group chats or send friend requests. Friend search combines message, remark, group nickname, roster and local image evidence. The roster skill handles friend-status audit, templated friend requests, remark updates, and one-shot greetings.
 
-It drives WeChat through the macOS Accessibility tree instead of screenshots, so window movement, zooming, and missing screen-recording permission do not break it. Every send path shares one gate: exact recipient match, duplicate-text guard, non-empty draft stop, focused read-back, rate-limit check, then post-send verification. Any ambiguous outcome is marked `unconfirmed` and never auto-retried. Requires macOS, a logged-in WeChat, Xcode Command Line Tools, and Accessibility permission for the host process.
+UI operations prefer the macOS Accessibility tree; screenshots are used when needed for source text or avatar disambiguation. Every send path shares exact-recipient, duplicate-text, draft, focus, rate-limit and post-send checks. Label checks are independent and operate on local JSON evidence. Requires macOS and a logged-in WeChat for live operations; the label evidence checker uses only Python's standard library.

@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   validate-example:
-    name: 名单与离线索引（Node / Python）
+    name: 名单、索引与标签核对（Node / Python）
     if: github.event.repository.private == false
     runs-on: ubuntu-latest
     steps:
@@ -26,7 +26,7 @@ jobs:
           python-version: "3.11"
       - name: 安装离线图片测试依赖
         run: python -m pip install -r skills/wechat-find-friends/scripts/requirements.txt
-      - name: 离线索引回归测试
+      - name: 离线索引与标签回归测试
         run: python -m unittest discover -s tests -v
 
   typecheck-helper:
